@@ -94,8 +94,8 @@ add_library(industrial_robot_client ${SRC_FILES})
 target_link_libraries(industrial_robot_client simple_message)
 target_link_libraries(industrial_robot_client industrial_utils)
 
-# add_library(industrial_robot_client_bswap ${SRC_FILES})
-# target_link_libraries(industrial_robot_client_bswap simple_message_bswap)
+add_library(industrial_robot_client_bswap ${SRC_FILES})
+target_link_libraries(industrial_robot_client_bswap simple_message_bswap)
 
 
 # The following executables(nodes) are for applications where the robot
