@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "ros/ros.h"
 #include "control_msgs/FollowJointTrajectoryFeedback.h"
@@ -25,6 +26,7 @@ using industrial::joint_feedback_message::JointFeedbackMessage;
 using industrial::simple_message::SimpleMessage;
 using industrial::smpl_msg_connection::SmplMsgConnection;
 
+
 /**
  * \brief Message Handler that handles joint feedback messages for multiple
  * control groups.
@@ -39,13 +41,31 @@ class JointFeedbackHandler : public industrial::message_handler::MessageHandler
         /** \brief Empty class constructor. */
         JointFeedbackHandler() {};
 
-        /** \brief Initialize multi-group joint relay handler */
-        bool init(industrial::smpl_msg_connection::SmplMsgConnection* connection);
+        /**
+         * \brief Initialize joint feedback handler for single control group.
+         *
+         * \param[in] connection
+         * \param[in] joint_manes vector of joint names
+         *
+         */
+        bool init(industrial::smpl_msg_connection::SmplMsgConnection* connection, std::vector<std::string> &joint_names);
+
+        /**
+         * \brief Initialize joint feedback handler for multiple cotrol groups.
+         *
+         * \param[in] connection
+         * \param[in] joint_manes_map map of joint names vectors by robot id
+         *
+         */
+        bool init(industrial::smpl_msg_connection::SmplMsgConnection* connection, std::map<int, std::vector<std::string> > &joint_names_map);
 
     protected:
 
         /** \brief ROS Node handle */
         ros::NodeHandle node_;
+
+        /** \brief Map of joint names by the robot id */
+        std::map<int, std::vector<std::string> > joint_names_map_;
 
         ros::Publisher pub_joint_control_state_;
         ros::Publisher pub_joint_sensor_state_;
@@ -78,7 +98,6 @@ class JointFeedbackHandler : public industrial::message_handler::MessageHandler
          * \brief internal callback
          */
         bool internalCB(JointFeedbackMessage& in);
-
 
     private:
 

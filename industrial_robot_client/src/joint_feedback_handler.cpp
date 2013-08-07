@@ -11,12 +11,21 @@ namespace industrial_robot_client
 {
 namespace joint_feedback_handler
 {
+bool JointFeedbackHandler::init(industrial::smpl_msg_connection::SmplMsgConnection* connection, std::vector<std::string> &joint_names)
+{
+    std::map<int, std::vector<std::string> > joint_names_map;
+    joint_names_map[0] = joint_names;
+    return init(connection, joint_names_map);
+}
 
-bool JointFeedbackHandler::init(industrial::smpl_msg_connection::SmplMsgConnection* connection)
+bool JointFeedbackHandler::init(industrial::smpl_msg_connection::SmplMsgConnection* connection, std::map<int, std::vector<std::string> > &joint_names_map)
 {
     // Register publishers
     this->pub_joint_control_state_ = this->node_.advertise<control_msgs::FollowJointTrajectoryFeedback>("feedback_states", 1);
     this->pub_joint_sensor_state_ = this->node_.advertise<sensor_msgs::JointState>("joint_states", 1);
+
+    // Store joint names
+    this->joint_names_map_ = joint_names_map;
 
     // Initialize message handler
     return MessageHandler::init((int)StandardMsgTypes::JOINT_FEEDBACK, connection);
@@ -87,31 +96,21 @@ bool JointFeedbackHandler::get_joint_names(int robot_id, std::vector<std::string
     bool ret = true;
     joint_names->clear();
 
-    switch (robot_id) {
-        case 0:
-            joint_names->push_back("r1_joint_s");
-            joint_names->push_back("r1_joint_l");
-            joint_names->push_back("r1_joint_u");
-            joint_names->push_back("r1_joint_r");
-            joint_names->push_back("r1_joint_b");
-            joint_names->push_back("r1_joint_t");
-            break;
-        case 1:
-            joint_names->push_back("r2_joint_s");
-            joint_names->push_back("r2_joint_l");
-            joint_names->push_back("r2_joint_u");
-            joint_names->push_back("r2_joint_r");
-            joint_names->push_back("r2_joint_b");
-            joint_names->push_back("r2_joint_t");
-            break;
-        case 2:
-            joint_names->push_back("ext_axis");
-            break;
-        default:
-            ROS_ERROR("Undefined control group: %d", robot_id);
-            ret = false;
-            break;
+    if (this->joint_names_map_.count(robot_id) > 0) {
+        std::vector<std::string> tmp;
+        tmp = this->joint_names_map_[robot_id];
+        for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); ++it)
+                joint_names->push_back(*it);
+    } else {
+        ROS_ERROR("Undefined control group: %d", robot_id);
+        ret = false;
     }
+
+    if (joint_names->size() <= 0) {
+        ROS_ERROR("Empty joint names");
+        ret = false;
+    }
+
     return ret;
 }
 
